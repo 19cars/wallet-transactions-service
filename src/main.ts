@@ -31,6 +31,16 @@ async function bootstrap(): Promise<void> {
       'A production-grade financial transactions service with ledger-based architecture',
     )
     .setVersion('1.0.0')
+    .addBearerAuth(
+      {
+        type: 'http',
+        scheme: 'bearer',
+        bearerFormat: 'JWT',
+        description: 'Introduce el token JWT (o tu Mock JWT de pruebas)',
+        in: 'header',
+      },
+      'bearer', // 👈 Nombre de referencia interna para los decoradores
+    )
     .addTag('transactions', 'Transaction operations (Write Model)')
     .addTag('ledger', 'Ledger operations (Read Model)')
     .addTag('health', 'Health check')
