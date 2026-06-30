@@ -1,116 +1,124 @@
 # Wallet Transactions Service
 
-A production-grade financial transactions service with ledger-based architecture, built with NestJS and PostgreSQL.
+Un servicio de transacciones financieras de grado de producción con arquitectura basada en libros contables (ledger-first), construido con NestJS y PostgreSQL.
 
-## 📋 Overview
+## 📋 Descripción General
 
-**Wallet Transactions Service** is a **grado financiero (financial-grade)** system designed to handle:
+**Wallet Transactions Service** es un sistema de grado financiero diseñado para gestionar:
 
-- Debit and credit transactions
-- Atomic transfers between wallets
-- Transaction reversals with compensation entries
-- Balance queries and transaction movements
-- Idempotent operations with Idempotency-Key support
-- Structured logging with correlation IDs
-- Comprehensive error handling
+- Transacciones de débito y crédito
+- Transferencias atómicas entre billeteras (wallets)
+- Reversiones de transacciones mediante asientos de compensación
+- Consultas de saldo y movimientos transaccionales
+- Operaciones idempotentes con soporte para Idempotency-Key
+- Registro de logs estructurado con IDs de correlación (correlation IDs)
+- Manejo integral de errores
 
-### Key Features
+### Características Clave
 
-- ✅ **Hexagonal Modular Architecture** — Clean separation of concerns
-- ✅ **CQRS-lite Pattern** — Separate Write (Transaction) and Read (Ledger) models
-- ✅ **Ledger-first Design** — Append-only ledger as the source of truth
-- ✅ **ACID Transactions** — Strong consistency guarantees
-- ✅ **Idempotency** — Request replay protection with 24-7 day TTL
-- ✅ **JWT Authentication** — Mock JWT support for local development
-- ✅ **Swagger/OpenAPI** — Interactive API documentation
-- ✅ **Comprehensive Tests** — Unit, Integration, and E2E tests
-- ✅ **Docker Support** — Full Docker Compose setup
-- ✅ **CI/CD Pipeline** — GitHub Actions workflow
+- ✅ **Arquitectura Modular Hexagonal** — Separación clara de responsabilidades
+- ✅ **Patrón CQRS-lite** — Modelos separados de Escritura (Transaction) y Lectura (Ledger)
+- ✅ **Diseño Ledger-first** — Libro contable de solo adición (append-only) como fuente única de verdad
+- ✅ **Transacciones ACID** — Garantías estrictas de consistencia
+- ✅ **Idempotencia** — Protección contra la repetición de peticiones con un TTL de 24 horas
+- ✅ **Autenticación JWT** — Soporte de Mock JWT para desarrollo local
+- ✅ **Swagger/OpenAPI** — Documentación interactiva de la API
+- ✅ **Pruebas Exhaustivas** — Pruebas unitarias, de integración y E2E
+- ✅ **Soporte para Docker** — Configuración completa con Docker Compose
+- ✅ **Pipeline de CI/CD** — Flujo de trabajo con GitHub Actions
 
 ---
 
-## 🏗️ Architecture
+## 🏗️ Arquitectura
 
-### Module Structure
+### Estructura de Módulos
 
 ```
+
 src/modules
 ├── transaction          (Write Model - CQRS)
 │   ├── dto/
 │   ├── entities/
 │   ├── services/
 │   └── transaction.controller.ts
-├── ledger              (Read Model - CQRS)
+├── ledger               (Read Model - CQRS)
 │   ├── entities/
 │   ├── services/
 │   └── ledger.controller.ts
-└── common              (Shared utilities)
-    ├── filters/
-    ├── middleware/
-    └── services/
-```
-
-### Request Flow
+└── common               (Utilidades compartidas)
+├── filters/
+├── middleware/
+└── services/
 
 ```
-HTTP Request
-    ↓
-Global Pipes (Validation)
-    ↓
-Middleware (Correlation ID)
-    ↓
-Controller (Routing)
-    ↓
-Service (Business Logic)
-    ↓
-Repository (Data Access)
-    ↓
-Database
+
+### Flujo de las Peticiones
+
+```
+
+Petición HTTP
+↓
+Pipes Globales (Validación)
+↓
+Middleware (ID de Correlación)
+↓
+Controller (Enrutamiento)
+↓
+Service (Lógica de Negocio)
+↓
+Repository (Acceso a Datos)
+↓
+Base de Datos
+
 ```
 
 ---
 
-## 🚀 Quick Start
+## 🚀 Inicio Rápido
 
-### Prerequisites
+### Prerrequisitos
 
 - **Node.js** 20+
 - **pnpm** 8+
 - **Docker** & **Docker Compose**
-- **PostgreSQL** 16+ (or use Docker)
+- **PostgreSQL** 16+ (o usar Docker)
 
-### Installation
+### Instalación
 
-1. **Clone the repository**
+1. **Clonar el repositorio**
 
 ```bash
-git clone https://github.com/your-org/wallet-transactions-service.git
+git clone [https://github.com/your-org/wallet-transactions-service.git](https://github.com/your-org/wallet-transactions-service.git)
 cd wallet-transactions-service
+
 ```
 
-2. **Install dependencies**
+2. **Instalar dependencias**
 
 ```bash
 pnpm install
+
 ```
 
-3. **Configure environment**
+3. **Configurar el entorno**
 
 ```bash
 cp .env.example .env
+
 ```
 
-4. **Start with Docker Compose**
+4. **Iniciar con Docker Compose**
 
 ```bash
 docker compose up --build
+
 ```
 
-The API will be available at: `http://localhost:3000/api/v1`
+La API estará disponible en: `http://localhost:3000/api/v1`
 
-### Local Development (without Docker)
+### Desarrollo Local (sin Docker)
 
-1. **Start PostgreSQL**
+1. **Iniciar PostgreSQL**
 
 ```bash
 docker run -d \
@@ -120,25 +128,27 @@ docker run -d \
   -e POSTGRES_PASSWORD=wallet_password \
   -p 5432:5432 \
   postgres:16-alpine
+
 ```
 
-2. **Run the application in development mode**
+2. **Ejecutar la aplicación en modo desarrollo**
 
 ```bash
 pnpm run start:dev
+
 ```
 
-3. **Open Swagger UI**
+3. **Abrir la interfaz de Swagger UI**
 
-Visit: `http://localhost:3000/api/v1/docs`
+Visita: `http://localhost:3000/api/v1/docs`
 
 ---
 
-## 📚 API Summary
+## 📚 Resumen de la API
 
-### Transaction Endpoints (Write Model)
+### Endpoints de Transacciones (Modelo de Escritura)
 
-#### Create Transaction
+#### Crear Transacción
 
 ```http
 POST /api/v1/transactions
@@ -152,9 +162,10 @@ Idempotency-Key: unique-key-123
   "currency": "USD",
   "metadata": { "reference": "INV-001" }
 }
+
 ```
 
-**Response (201 Created):**
+**Respuesta (201 Created):**
 
 ```json
 {
@@ -169,7 +180,7 @@ Idempotency-Key: unique-key-123
 }
 ```
 
-#### Create Transfer
+#### Crear Transferencia
 
 ```http
 POST /api/v1/transactions/transfer
@@ -182,33 +193,36 @@ Idempotency-Key: unique-transfer-key-456
   "amount": 50.00,
   "currency": "USD"
 }
+
 ```
 
-**Response (201 Created):**
+**Respuesta (201 Created):**
 
 ```json
 {
-  "source": {/* debit transaction */},
-  "target": {/* credit transaction */}
+  "source": {/* transaccion de debito */},
+  "target": {/* transaccion de credito */}
 }
 ```
 
-#### Reverse Transaction
+#### Revertir Transacción
 
 ```http
 POST /api/v1/transactions/{transactionId}/reversal
 Idempotency-Key: unique-reversal-key-789
+
 ```
 
-### Ledger Endpoints (Read Model)
+### Endpoints de Libro Contable (Modelo de Lectura)
 
-#### Get Wallet Balance
+#### Obtener Saldo de Billetera
 
 ```http
 GET /api/v1/wallets/{walletId}/balance
+
 ```
 
-**Response (200 OK):**
+**Respuesta (200 OK):**
 
 ```json
 {
@@ -219,13 +233,14 @@ GET /api/v1/wallets/{walletId}/balance
 }
 ```
 
-#### Get Wallet Movements
+#### Obtener Movimientos de Billetera
 
 ```http
 GET /api/v1/wallets/{walletId}/movements?page=1&pageSize=50
+
 ```
 
-**Response (200 OK):**
+**Respuesta (200 OK):**
 
 ```json
 {
@@ -244,127 +259,136 @@ GET /api/v1/wallets/{walletId}/movements?page=1&pageSize=50
 }
 ```
 
-### Health Check
+### Comprobación de Estado (Health Check)
 
 ```http
 GET /api/v1/health
+
 ```
 
 ---
 
-## 🧪 Testing
+## 🧪 Pruebas
 
-### Unit Tests
+### Pruebas Unitarias
 
 ```bash
 pnpm run test
-pnpm run test:watch       # Watch mode
-pnpm run test:cov         # With coverage
+pnpm run test:watch       # Modo observador (watch)
+pnpm run test:cov         # Con reporte de cobertura
+
 ```
 
-### Integration Tests
+### Pruebas de Integración
 
 ```bash
 pnpm run test:e2e
+
 ```
 
-### Coverage Report
+### Reporte de Cobertura
 
 ```bash
 pnpm run test:cov
+
 ```
 
-Reports are generated in `./coverage` directory.
+Los reportes se generan dentro del directorio `./coverage`.
 
 ---
 
-## 🔧 Development
+## 🔧 Desarrollo
 
-### Formatting & Linting
+### Formateo & Linting
 
 ```bash
-pnpm run lint              # Run ESLint with auto-fix
-pnpm run format            # Format with Prettier
+pnpm run lint              # Ejecutar ESLint con corrección automática
+pnpm run format            # Formatear con Prettier
+
 ```
 
-### Build
+### Compilación (Build)
 
 ```bash
-pnpm run build             # Production build
-pnpm run start:prod        # Start production server
+pnpm run build             # Compilación para producción
+pnpm run start:prod        # Iniciar el servidor de producción
+
 ```
 
-### Database Migrations
+### Migraciones de Base de Datos
 
 ```bash
-pnpm run migration:generate -- -n MigrationName
+pnpm run migration:generate -- -n NombreDeLaMigracion
 pnpm run migration:run
 pnpm run migration:revert
+
 ```
 
 ---
 
 ## 🐳 Docker
 
-### Docker Compose (Recommended)
+### Docker Compose (Recomendado)
 
 ```bash
-docker compose up --build        # Start services
-docker compose down              # Stop services
-docker compose logs -f api       # View API logs
-docker compose logs -f postgres  # View database logs
+docker compose up --build        # Iniciar servicios
+docker compose down              # Detener servicios
+docker compose logs -f api       # Ver logs de la API
+docker compose logs -f postgres  # Ver logs de la base de datos
+
 ```
 
-Services:
+Servicios:
 
-- **API**: Port 3000
-- **PostgreSQL**: Port 5432
+- **API**: Puerto 3000
+- **PostgreSQL**: Puerto 5432
 
-### Docker Build Manually
+### Compilación Manual de Docker
 
 ```bash
 docker build -t wallet-transactions-service:latest .
 docker run -p 3000:3000 --env-file .env wallet-transactions-service:latest
+
 ```
 
 ---
 
-## 📊 Environment Variables
+## 📊 Variables de Entorno
 
-| Variable               | Default         | Description                  |
-| ---------------------- | --------------- | ---------------------------- |
-| `DATABASE_URL`         | —               | PostgreSQL connection string |
-| `DATABASE_HOST`        | localhost       | Database host                |
-| `DATABASE_PORT`        | 5432            | Database port                |
-| `DATABASE_NAME`        | WalletDB        | Database name                |
-| `DATABASE_USER`        | wallet_user     | Database user                |
-| `DATABASE_PASSWORD`    | wallet_password | Database password            |
-| `DATABASE_SYNCHRONIZE` | true            | Auto-sync schema (dev only)  |
-| `JWT_SECRET`           | your_secret     | JWT signing secret           |
-| `JWT_EXPIRATION`       | 7d              | JWT token expiration         |
-| `NODE_ENV`             | development     | Node environment             |
-| `LOG_LEVEL`            | debug           | Logging level                |
-| `API_PORT`             | 3000            | API server port              |
-| `API_GLOBAL_PREFIX`    | api/v1          | API global prefix            |
+| Variable               | Por Defecto     | Descripción                                             |
+| ---------------------- | --------------- | ------------------------------------------------------- |
+| `DATABASE_URL`         | —               | Cadena de conexión de PostgreSQL                        |
+| `DATABASE_HOST`        | localhost       | Host de la base de datos                                |
+| `DATABASE_PORT`        | 5432            | Puerto de la base de datos                              |
+| `DATABASE_NAME`        | WalletDB        | Nombre de la base de datos                              |
+| `DATABASE_USER`        | wallet_user     | Usuario de la base de datos                             |
+| `DATABASE_PASSWORD`    | wallet_password | Contraseña de la base de datos                          |
+| `DATABASE_SYNCHRONIZE` | true            | Sincronización automática del esquema (solo desarrollo) |
+| `JWT_SECRET`           | your_secret     | Clave secreta de firma para JWT                         |
+| `JWT_EXPIRATION`       | 7d              | Tiempo de expiración del token JWT                      |
+| `NODE_ENV`             | development     | Entorno de ejecución de Node                            |
+| `LOG_LEVEL`            | debug           | Nivel de registro de logs                               |
+| `API_PORT`             | 3000            | Puerto del servidor de la API                           |
+| `API_GLOBAL_PREFIX`    | api/v1          | Prefijo global de la API                                |
 
 ---
 
-## 📋 Conventions
+## 📋 Convenciones
 
-### Code Style
+### Estilo de Código
 
-- **camelCase**: Variables, functions, methods
-- **PascalCase**: Classes, DTOs, Entities
-- **kebab-case**: File names
+- **camelCase**: Variables, funciones, métodos
+- **PascalCase**: Clases, DTOs, Entidades
+- **kebab-case**: Nombres de archivos
 
-### Git Workflow (Git Flow)
+### Flujo de Trabajo en Git (Git Flow)
 
-- `main` → Production
-- `develop` → Integration
-- `feature/*` → Development
-- `hotfix/*` → Production fixes
+- `main` → Producción
+- `develop` → Integración
+- `feature/*` → Desarrollo de características
+- `hotfix/*` → Correcciones urgentes para producción
 
-### Commit Conventions
+### Convenciones de Commits
 
 ```
 feat: add transaction creation
@@ -373,118 +397,119 @@ refactor: improve ledger queries
 test: add integration tests
 chore: update dependencies
 docs: update README
+
 ```
 
 ---
 
-## ✅ Database Rules
+## ✅ Reglas de la Base de Datos
 
-### Development (`DATABASE_SYNCHRONIZE=true`)
+### Desarrollo (`DATABASE_SYNCHRONIZE=true`)
 
-- Automatic schema synchronization on startup
-- TypeORM auto-generates tables and migrations
-- Suitable for local development only
+- Sincronización automática del esquema de datos al iniciar
+- TypeORM genera automáticamente las tablas y migraciones
+- Adecuado únicamente para entornos de desarrollo local
 
-### Production (`DATABASE_SYNCHRONIZE=false`)
+### Producción (`DATABASE_SYNCHRONIZE=false`)
 
-- Schema changes managed via TypeORM migrations
-- **NEVER use synchronize in production**
-- Manual migration deployment required
+- Los cambios en el esquema son gestionados estrictamente vía migraciones de TypeORM
+- **NUNCA utilices synchronize en producción**
+- Se requiere el despliegue manual de las migraciones
 
-### Ledger Design (Append-Only)
+### Diseño de Libro Contable (Append-Only)
 
-- Ledger entries are immutable
-- **No UPDATE or DELETE operations**
-- Reversals create compensation entries, not mutations
-- Single source of truth for wallet balances
+- Los registros del libro contable son inmutables
+- **No se permiten operaciones UPDATE ni DELETE**
+- Las reversiones crean asientos de compensación, nunca mutaciones del registro original
+- Fuente única de verdad para los saldos de las billeteras
 
 ---
 
-## 📦 Dependencies
+## 📦 Dependencias
 
 ### Core
 
-- **@nestjs/core** v10.3+ — NestJS framework
-- **@nestjs/typeorm** v9.0+ — ORM integration
-- **typeorm** v0.3+ — SQL ORM
-- **pg** v8.11+ — PostgreSQL driver
-- **@nestjs/swagger** v7.1+ — OpenAPI documentation
+- **@nestjs/core** v10.3+ — Framework NestJS
+- **@nestjs/typeorm** v9.0+ — Integración con el ORM
+- **typeorm** v0.3+ — ORM SQL
+- **pg** v8.11+ — Driver para PostgreSQL
+- **@nestjs/swagger** v7.1+ — Documentación de OpenAPI
 
-### Utilities
+### Utilidades
 
-- **class-validator** v0.14+ — DTO validation
-- **class-transformer** v0.5+ — Object transformation
-- **uuid** v9.0+ — UUID generation
+- **class-validator** v0.14+ — Validación de DTOs
+- **class-transformer** v0.5+ — Transformación de objetos
+- **uuid** v9.0+ — Generación de UUIDs
 
-### Development
+### Desarrollo
 
-- **@nestjs/cli** v10.3+ — NestJS CLI
-- **typescript** v5.3+ — TypeScript compiler
-- **jest** v29.7+ — Testing framework
-- **eslint** v8.56+ — Linting
-- **prettier** v3.1+ — Code formatting
-
----
-
-## 🔒 Security
-
-- ✅ Strict TypeScript mode
-- ✅ Request validation with class-validator
-- ✅ JWT authentication support
-- ✅ Correlation ID for audit trails
-- ✅ Error handling without stack traces
-- ✅ No sensitive data in logs
+- **@nestjs/cli** v10.3+ — CLI de NestJS
+- **typescript** v5.3+ — Compilador de TypeScript
+- **jest** v29.7+ — Framework de pruebas
+- **eslint** v8.56+ — Linter
+- **prettier** v3.1+ — Formateador de código
 
 ---
 
-## 📈 Performance Considerations
+## 🔒 Seguridad
 
-- Connection pooling via TypeORM
-- Indexed ledger queries (wallet, transaction)
-- Idempotency cache with TTL
-- Async/await for non-blocking I/O
-- Lazy module loading
-
----
-
-## 🤝 Contributing
-
-1. Create a feature branch: `git checkout -b feature/my-feature`
-2. Commit changes: `git commit -m "feat: add my feature"`
-3. Push to branch: `git push origin feature/my-feature`
-4. Open a Pull Request
-
-### Pre-commit Checks
-
-- ESLint must pass
-- All tests must pass
-- Code coverage maintained
+- ✅ Modo estricto de TypeScript activado
+- ✅ Validación de peticiones mediante class-validator
+- ✅ Soporte para autenticación por JWT
+- ✅ ID de correlación implementado para pistas de auditoría
+- ✅ Manejo de errores limpio sin exposición de trazas de pila (stack traces)
+- ✅ Exclusión de datos sensibles en los logs
 
 ---
 
-## 📝 License
+## 📈 Consideraciones de Rendimiento
+
+- Agrupamiento de conexiones (connection pooling) gestionado vía TypeORM
+- Consultas al libro contable optimizadas mediante índices (wallet, transaction)
+- Caché de idempotencia provisto de TTL
+- Uso riguroso de Async/await para operaciones de I/O no bloqueantes
+- Carga perezosa (lazy loading) de módulos
+
+---
+
+## 🤝 Contribuciones
+
+1. Crea una rama para tu característica: `git checkout -b feature/my-feature`
+2. Realiza el commit de tus cambios: `git commit -m "feat: add my feature"`
+3. Sube la rama al repositorio: `git push origin feature/my-feature`
+4. Abre un Pull Request
+
+### Verificaciones previas al Commit
+
+- El análisis de ESLint debe pasar sin errores
+- Todas las pruebas deben completarse con éxito
+- Se debe mantener la cobertura de código acordada
+
+---
+
+## 📝 Licencia
 
 MIT
 
 ---
 
-## 📞 Support
+## 📞 Soporte
 
-For issues, questions, or suggestions, please open an issue in the repository or contact the development team.
-
----
-
-## 🎓 Architecture Principles
-
-1. **Single Responsibility** — Each service handles one concern
-2. **Dependency Injection** — All dependencies are injected
-3. **Separation of Concerns** — Controllers, Services, Repositories
-4. **CQRS-lite** — Separate write and read models
-5. **Ledger-first** — Immutable append-only ledger
-6. **Idempotency** — Safe request replays
-7. **ACID** — Strong consistency for financial operations
-8. **Auditability** — All changes are logged and traceable
+Para reportar fallos, realizar preguntas o sugerencias, por favor abre un issue en este repositorio o contacta al equipo de desarrollo.
 
 ---
 
-**Developed with ❤️ using NestJS and TypeScript**
+## 🎓 Principios de Arquitectura
+
+1. **Responsabilidad Única** — Cada servicio gestiona una sola preocupación de negocio
+2. **Inyección de Dependencias** — Todas las dependencias son inyectadas
+3. **Separación de Responsabilidades** — Controladores, Servicios y Repositorios claramente definidos
+4. **CQRS-lite** — Modelos separados de lectura y escritura
+5. **Ledger-first** — Libro contable inmutable de solo adición
+6. **Idempotencia** — Repetición segura de peticiones HTTP
+7. **ACID** — Consistencia fuerte para operaciones financieras
+8. **Auditabilidad** — Todos los cambios son registrados y rastreables
+
+---
+
+**Desarrollado con ❤️ usando NestJS y TypeScript**
