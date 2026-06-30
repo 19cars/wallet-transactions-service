@@ -4,6 +4,7 @@ import { TypeOrmModuleOptions, TypeOrmOptionsFactory } from '@nestjs/typeorm';
 import { Transaction } from '@modules/transaction/entities/transaction.entity';
 import { IdempotencyKey } from '@modules/transaction/entities/idempotency-key.entity';
 import { LedgerEntry } from '@modules/ledger/entities/ledger-entry.entity';
+import { Wallet } from '@modules/wallet/entities/wallet.entity';
 
 @Injectable()
 export class TypeOrmConfigService implements TypeOrmOptionsFactory {
@@ -20,7 +21,7 @@ export class TypeOrmConfigService implements TypeOrmOptionsFactory {
       username: this.config.get<string>('DATABASE_USER', 'wallet_user'),
       password: this.config.get<string>('DATABASE_PASSWORD', 'wallet_password'),
       database: this.config.get<string>('DATABASE_NAME', 'WalletDB'),
-      entities: [Transaction, IdempotencyKey, LedgerEntry],
+      entities: [Transaction, IdempotencyKey, LedgerEntry, Wallet],
       synchronize: isSynchronize && !isProduction,
       logging: !isProduction,
       dropSchema: false,
