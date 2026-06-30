@@ -1,0 +1,56 @@
+version: '3.9'
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: wallet_postgres
+    environment:
+      POSTGRES_DB: ${DATABASE_NAME:-WalletDB}
+      POSTGRES_USER: ${DATABASE_USER:-wallet_user}
+      POSTGRES_PASSWORD: ${DATABASE_PASSWORD:-wallet_password}
+    ports:
+      - '${DATABASE_PORT:-5432}:5432'
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U ${DATABASE_USER:-wallet_user}']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - wallet_network
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: wallet_api
+    environment:
+      DATABASE_URL: postgresql://${DATABASE_USER:-wallet_user}:${DATABASE_PASSWORD:-wallet_password}@postgres:5432/${DATABASE_NAME:-WalletDB}
+      DATABASE_HOST: postgres
+      DATABASE_PORT: 5432
+      DATABASE_NAME: ${DATABASE_NAME:-WalletDB}
+      DATABASE_USER: ${DATABASE_USER:-wallet_user}
+      DATABASE_PASSWORD: ${DATABASE_PASSWORD:-wallet_password}
+      DATABASE_SYNCHRONIZE: ${DATABASE_SYNCHRONIZE:-true}
+      JWT_SECRET: ${JWT_SECRET:-your_jwt_secret_change_this_in_production}
+      JWT_EXPIRATION: ${JWT_EXPIRATION:-7d}
+      NODE_ENV: ${NODE_ENV:-development}
+      LOG_LEVEL: ${LOG_LEVEL:-debug}
+      API_PORT: 3000
+    ports:
+      - '3000:3000'
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - wallet_network
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+    driver: local
+
+networks:
+  wallet_network:
+    driver: bridge

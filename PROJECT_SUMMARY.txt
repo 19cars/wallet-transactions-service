@@ -1,0 +1,470 @@
+╔══════════════════════════════════════════════════════════════════════════════╗
+║                 WALLET TRANSACTIONS SERVICE - PROJECT CREATED                ║
+║                        NestJS + PostgreSQL + Docker                          ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+
+📦 PROJECT STRUCTURE
+────────────────────────────────────────────────────────────────────────────────
+
+wallet-transactions-service/
+├── src/
+│   ├── app.module.ts                    # Main application module
+│   ├── main.ts                          # Application entry point
+│   ├── modules/
+│   │   ├── transaction/                 # WRITE MODEL (CQRS)
+│   │   │   ├── dto/
+│   │   │   │   ├── create-transaction.dto.ts
+│   │   │   │   └── create-transfer.dto.ts
+│   │   │   ├── entities/
+│   │   │   │   ├── transaction.entity.ts
+│   │   │   │   └── idempotency-key.entity.ts
+│   │   │   ├── services/
+│   │   │   │   ├── transaction.service.ts
+│   │   │   │   └── idempotency.service.ts
+│   │   │   ├── transaction.controller.ts
+│   │   │   └── transaction.module.ts
+│   │   │
+│   │   └── ledger/                      # READ MODEL (CQRS)
+│   │       ├── entities/
+│   │       │   └── ledger-entry.entity.ts
+│   │       ├── services/
+│   │       │   └── ledger.service.ts
+│   │       ├── ledger.controller.ts
+│   │       └── ledger.module.ts
+│   │
+│   ├── common/
+│   │   ├── filters/
+│   │   │   └── global-exception.filter.ts
+│   │   ├── middleware/
+│   │   │   └── correlation-id.middleware.ts
+│   │   ├── services/
+│   │   │   └── health.service.ts
+│   │   ├── controllers/
+│   │   │   └── health.controller.ts
+│   │   └── common.module.ts
+│   │
+│   └── config/
+│       ├── typeorm.config.ts
+│       └── app.config.ts
+│
+├── test/
+│   ├── transaction.service.spec.ts      # Unit tests
+│   ├── ledger.service.spec.ts           # Unit tests
+│   ├── app.e2e-spec.ts                  # E2E tests
+│   └── jest-e2e.json                    # E2E configuration
+│
+├── .github/
+│   └── workflows/
+│       └── ci-cd.yml                    # GitHub Actions pipeline
+│
+├── package.json
+├── tsconfig.json
+├── jest.config.js
+├── nest-cli.json
+├── docker-compose.yml                   # Docker Compose configuration
+├── Dockerfile                           # Multi-stage Docker build
+├── .env                                 # Environment variables (dev)
+├── .env.example                         # Environment template
+├── .eslintrc.js                         # ESLint configuration
+├── .prettierrc                          # Prettier configuration
+├── README.md                            # Comprehensive documentation
+├── CONTRIBUTING.md                      # Contribution guidelines
+└── CHANGELOG.md                         # Version history
+
+
+🏗️  ARCHITECTURE
+────────────────────────────────────────────────────────────────────────────────
+
+HEXAGONAL MODULAR ARCHITECTURE WITH CQRS-LITE PATTERN
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                           HTTP REQUEST (Swagger)                             │
+└──────────────────┬──────────────────────────────────────────────────────────┘
+                   │
+                   ▼
+┌─────────────────────────────────────────────────────────────────────────────┐
+│              Global Pipes (Validation) + Middleware (Correlation ID)        │
+└──────────────────┬──────────────────────────────────────────────────────────┘
+                   │
+      ┌────────────┴────────────┐
+      ▼                         ▼
+┌─────────────────┐     ┌──────────────────┐
+│ TRANSACTION     │     │   LEDGER         │
+│  (WRITE MODEL)  │     │   (READ MODEL)   │
+│                 │     │                  │
+├─────────────────┤     ├──────────────────┤
+│ Controllers:    │     │ Controllers:     │
+│ • POST /        │     │ • GET /balance   │
+│ • POST /        │     │ • GET /          │
+│   transfer      │     │   movements      │
+│ • POST /{id}/   │     │                  │
+│   reversal      │     │                  │
+│                 │     │                  │
+├─────────────────┤     ├──────────────────┤
+│ Services:       │     │ Services:        │
+│ • Transaction   │     │ • Ledger         │
+│ • Idempotency   │     │                  │
+│                 │     │                  │
+├─────────────────┤     ├──────────────────┤
+│ Entities:       │     │ Entities:        │
+│ • Transaction   │     │ • LedgerEntry    │
+│ • Idempotency   │     │   (Append-Only)  │
+│   Key           │     │                  │
+└────────┬────────┘     └────────┬─────────┘
+         │                       │
+         ▼                       ▼
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                      TypeORM Repository Layer                                │
+└──────────────────┬──────────────────────────────────────────────────────────┘
+                   │
+                   ▼
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                   PostgreSQL Database (WalletDB)                             │
+│                                                                               │
+│   tables: transactions | idempotency_keys | ledger_entries                  │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+
+📊 DATABASE DESIGN
+────────────────────────────────────────────────────────────────────────────────
+
+TRANSACTIONS TABLE (Write Model)
+┌──────────────┬──────────────┬───────────────────────┐
+│ id (UUID)    │ walletId     │ type (DEBIT/CREDIT)   │
+│ amount       │ currency     │ status                │
+│ metadata     │ createdAt    │ completedAt           │
+│ relatedTx_Id │              │                       │
+└──────────────┴──────────────┴───────────────────────┘
+
+LEDGER_ENTRIES TABLE (Read Model - Append-Only)
+┌──────────────┬──────────────┬───────────────────────┐
+│ id (UUID)    │ walletId     │ type (DEBIT/CREDIT)   │
+│ debitAmount  │ creditAmount │ balance (running)     │
+│ currency     │ sourceTransId│ createdAt             │
+└──────────────┴──────────────┴───────────────────────┘
+
+IDEMPOTENCY_KEYS TABLE (Request Deduplication)
+┌──────────────┬──────────────┬───────────────────────┐
+│ key (PK)     │ requestHash  │ response (JSON)       │
+│ statusCode   │ expiresAt    │ createdAt             │
+└──────────────┴──────────────┴───────────────────────┘
+
+
+🚀 QUICK START COMMANDS
+────────────────────────────────────────────────────────────────────────────────
+
+1. Install Dependencies:
+   $ pnpm install
+
+2. Start with Docker Compose (Recommended):
+   $ docker compose up --build
+   
+   Services:
+   • API: http://localhost:3000/api/v1
+   • Swagger Docs: http://localhost:3000/api/v1/docs
+   • Database: localhost:5432
+
+3. Development (without Docker):
+   $ docker run -d \
+     -e POSTGRES_DB=WalletDB \
+     -e POSTGRES_USER=wallet_user \
+     -e POSTGRES_PASSWORD=wallet_password \
+     -p 5432:5432 \
+     postgres:16-alpine
+   
+   $ pnpm run start:dev
+
+4. Testing:
+   $ pnpm run test              # Unit tests
+   $ pnpm run test:e2e          # Integration tests
+   $ pnpm run test:cov          # Coverage report
+
+5. Code Quality:
+   $ pnpm run lint              # ESLint
+   $ pnpm run format            # Prettier
+
+
+📚 API ENDPOINTS
+────────────────────────────────────────────────────────────────────────────────
+
+WRITE MODEL (Transaction Module)
+────────────────────────────────
+POST   /api/v1/transactions
+       Create debit/credit transaction
+       Body: { type, walletId, amount, currency, metadata? }
+       Idempotency-Key: optional header (24h TTL)
+
+POST   /api/v1/transactions/transfer
+       Atomic transfer between wallets
+       Body: { sourceWalletId, targetWalletId, amount, currency }
+       Idempotency-Key: optional header
+
+POST   /api/v1/transactions/{id}/reversal
+       Create reversal with compensation entry
+       Idempotency-Key: optional header
+
+GET    /api/v1/transactions/{id}
+       Retrieve transaction details
+
+READ MODEL (Ledger Module)
+──────────────────────────
+GET    /api/v1/wallets/{walletId}/balance
+       Get current wallet balance
+       Response: { walletId, balance, currency, lastUpdated }
+
+GET    /api/v1/wallets/{walletId}/movements?limit=50&offset=0
+       Get transaction history
+       Response: [{ id, type, amount, balance, createdAt }, ...]
+
+COMMON
+──────
+GET    /api/v1/health
+       Health check endpoint
+
+
+✅ FEATURES IMPLEMENTED
+────────────────────────────────────────────────────────────────────────────────
+
+Architecture & Design
+  ✓ Hexagonal modular architecture
+  ✓ CQRS-lite (separate write and read models)
+  ✓ Ledger-first design (append-only)
+  ✓ Strong ACID consistency
+  ✓ Dependency injection (all dependencies injected)
+
+Transaction Operations
+  ✓ Debit/Credit transactions
+  ✓ Atomic transfers (dual transactions)
+  ✓ Transaction reversals (compensation entries)
+  ✓ Idempotent operations (24h TTL)
+  ✓ Transaction status tracking
+
+Ledger Operations
+  ✓ Balance queries
+  ✓ Movement history with pagination
+  ✓ Running balance calculation
+  ✓ Append-only design (immutable)
+
+Data Validation
+  ✓ DTOs with class-validator
+  ✓ Type validation at controller level
+  ✓ UUID format validation
+  ✓ Enum validation (TransactionType, Status)
+
+Error Handling
+  ✓ Global exception filter
+  ✓ No stack traces exposed to clients
+  ✓ Consistent error format
+  ✓ HTTP status codes
+
+Logging & Audit
+  ✓ Correlation ID middleware
+  ✓ Request/response logging
+  ✓ Structured logging
+  ✓ Audit trail via correlation IDs
+
+Testing
+  ✓ Unit tests with Jest
+  ✓ Integration tests
+  ✓ E2E tests with Supertest
+  ✓ Coverage reporting
+
+API Documentation
+  ✓ Swagger/OpenAPI 3.0
+  ✓ Interactive API explorer
+  ✓ Endpoint documentation
+  ✓ Example requests/responses
+
+Infrastructure
+  ✓ Docker Compose setup
+  ✓ Multi-stage Dockerfile
+  ✓ Health checks
+  ✓ PostgreSQL 16 integration
+
+CI/CD
+  ✓ GitHub Actions pipeline
+  ✓ Linting (ESLint)
+  ✓ Testing (Jest + Supertest)
+  ✓ Build verification
+  ✓ Docker build support
+
+Code Quality
+  ✓ Strict TypeScript mode
+  ✓ ESLint configuration
+  ✓ Prettier formatting
+  ✓ Naming conventions (camelCase, PascalCase)
+  ✓ Code comments for complex logic
+
+
+📦 TECHNOLOGY STACK
+────────────────────────────────────────────────────────────────────────────────
+
+Runtime
+  • Node.js 20+
+  • TypeScript 5.3 (strict mode)
+
+Framework
+  • NestJS 10.3+ (LTS)
+  • Express (underlying HTTP framework)
+
+Database
+  • PostgreSQL 16+
+  • TypeORM 0.3+
+
+Validation & Security
+  • class-validator 0.14+
+  • class-transformer 0.5+
+  • Passport.js (JWT support ready)
+
+Documentation
+  • Swagger/OpenAPI 7.1+
+
+Testing
+  • Jest 29.7+
+  • Supertest 6.3+
+
+Development Tools
+  • ESLint 8.56+
+  • Prettier 3.1+
+  • NestJS CLI 10.3+
+
+Package Manager
+  • pnpm 8+
+
+Containerization
+  • Docker (multi-stage builds)
+  • Docker Compose 3.9+
+
+CI/CD
+  • GitHub Actions
+
+
+📖 DOCUMENTATION FILES
+────────────────────────────────────────────────────────────────────────────────
+
+README.md
+  • Project overview and purpose
+  • Architecture explanation
+  • Quick start guide
+  • API endpoint documentation
+  • Testing instructions
+  • Environment variables
+  • Development commands
+
+CONTRIBUTING.md
+  • Contribution guidelines
+  • Git workflow (Git Flow)
+  • Commit message format
+  • Code standards and conventions
+  • Testing requirements
+  • Pull request process
+  • Code of conduct
+
+CHANGELOG.md
+  • Version history
+  • Feature list for v1.0.0
+  • Planned features
+
+AGENTS.MD
+  • Project specifications and rules
+  • Architecture constraints
+  • NestJS best practices
+  • Database design rules
+  • Idempotency rules
+  • Docker Compose requirements
+
+
+🔧 CONFIGURATION FILES
+────────────────────────────────────────────────────────────────────────────────
+
+package.json              - Dependencies and scripts
+tsconfig.json             - TypeScript compiler configuration
+jest.config.js            - Unit test configuration
+test/jest-e2e.json        - E2E test configuration
+.eslintrc.js              - ESLint rules
+.prettierrc                - Prettier formatting rules
+nest-cli.json             - NestJS CLI configuration
+docker-compose.yml        - Docker services definition
+Dockerfile                - Multi-stage Docker build
+.env                      - Development environment variables
+.env.example              - Environment template
+.gitignore                - Git ignore rules
+.dockerignore             - Docker ignore rules
+.github/workflows/ci-cd.yml - CI/CD pipeline
+
+
+🎯 NEXT STEPS
+────────────────────────────────────────────────────────────────────────────────
+
+1. Install Dependencies:
+   cd c:\Users\cg\Documents\ligo\wallet-transactions-service
+   pnpm install
+
+2. Configure Database (if using local PostgreSQL):
+   - Update .env with database credentials
+   - Ensure PostgreSQL is running on localhost:5432
+
+3. Start Development Server:
+   pnpm run start:dev
+
+4. Access API:
+   - API Base: http://localhost:3000/api/v1
+   - Swagger Docs: http://localhost:3000/api/v1/docs
+   - Health Check: http://localhost:3000/api/v1/health
+
+5. Run Tests:
+   pnpm run test              # Unit tests
+   pnpm run test:e2e          # Integration tests
+   pnpm run test:cov          # Coverage
+
+6. Run Linting & Formatting:
+   pnpm run lint              # ESLint
+   pnpm run format            # Prettier
+
+7. Build for Production:
+   pnpm run build
+   pnpm run start:prod
+
+8. Deploy with Docker:
+   docker compose up --build
+
+
+✨ PROJECT HIGHLIGHTS
+────────────────────────────────────────────────────────────────────────────────
+
+✓ Production-Ready Code
+  • Strict TypeScript mode
+  • Comprehensive error handling
+  • Input validation on all endpoints
+  • Secure by default
+
+✓ Scalable Architecture
+  • Modular design (easy to extend)
+  • Clean separation of concerns
+  • DI-based architecture
+  • Follows NestJS best practices
+
+✓ Financial-Grade Reliability
+  • ACID transactions
+  • Idempotent operations
+  • Audit trails (correlation IDs)
+  • Append-only ledger (immutable)
+
+✓ Developer Experience
+  • Swagger interactive docs
+  • Clear code organization
+  • Comprehensive tests
+  • Helpful error messages
+  • Contributing guidelines
+
+✓ Operations Ready
+  • Docker + Docker Compose
+  • Health checks
+  • Structured logging
+  • CI/CD pipeline
+  • Environment-based config
+
+
+═══════════════════════════════════════════════════════════════════════════════
+  🎉 PROJECT SUCCESSFULLY CREATED - Ready for Development!
+═══════════════════════════════════════════════════════════════════════════════
