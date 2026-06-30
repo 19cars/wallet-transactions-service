@@ -148,7 +148,7 @@ Idempotency-Key: unique-key-123
 {
   "type": "DEBIT",
   "walletId": "550e8400-e29b-41d4-a716-446655440000",
-  "amount": 100.00,
+  "amount": "100.0000",
   "currency": "USD",
   "metadata": { "reference": "INV-001" }
 }
@@ -188,12 +188,8 @@ Idempotency-Key: unique-transfer-key-456
 
 ```json
 {
-  "source": {
-    /* debit transaction */
-  },
-  "target": {
-    /* credit transaction */
-  }
+  "source": {/* debit transaction */},
+  "target": {/* credit transaction */}
 }
 ```
 
@@ -217,7 +213,7 @@ GET /api/v1/wallets/{walletId}/balance
 ```json
 {
   "walletId": "550e8400-e29b-41d4-a716-446655440000",
-  "balance": "450.00",
+  "availableBalance": "450.0000",
   "currency": "USD",
   "lastUpdated": "2024-01-15T10:30:00.000Z"
 }
@@ -226,22 +222,26 @@ GET /api/v1/wallets/{walletId}/balance
 #### Get Wallet Movements
 
 ```http
-GET /api/v1/wallets/{walletId}/movements?limit=50&offset=0
+GET /api/v1/wallets/{walletId}/movements?page=1&pageSize=50
 ```
 
 **Response (200 OK):**
 
 ```json
-[
-  {
-    "id": "550e8400-e29b-41d4-a716-446655440001",
-    "type": "DEBIT",
-    "amount": "100.00",
-    "balance": "900.00",
-    "currency": "USD",
-    "createdAt": "2024-01-15T10:30:00.000Z"
-  }
-]
+{
+  "walletId": "550e8400-e29b-41d4-a716-446655440000",
+  "total": 1,
+  "movements": [
+    {
+      "transactionId": "550e8400-e29b-41d4-a716-446655440001",
+      "type": "DEBIT",
+      "amount": "100.0000",
+      "status": "COMPLETED",
+      "currency": "USD",
+      "createdAt": "2024-01-15T10:30:00.000Z"
+    }
+  ]
+}
 ```
 
 ### Health Check

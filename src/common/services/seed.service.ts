@@ -3,9 +3,9 @@ import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { v4 as uuidv4 } from 'uuid';
-import { Transaction } from '@modules/transaction/entities/transaction.entity';
-import { TransactionStatus } from '@modules/transaction/entities/transaction.entity';
+import { Transaction, TransactionStatus } from '@modules/transaction/entities/transaction.entity';
 import { LedgerEntry } from '@modules/ledger/entities/ledger-entry.entity';
+import { Wallet, WalletStatus } from '@modules/wallet/entities/wallet.entity';
 
 @Injectable()
 export class SeedService implements OnModuleInit {
@@ -17,6 +17,8 @@ export class SeedService implements OnModuleInit {
     private readonly transactionRepository: Repository<Transaction>,
     @InjectRepository(LedgerEntry)
     private readonly ledgerRepository: Repository<LedgerEntry>,
+    @InjectRepository(Wallet)
+    private readonly walletRepository: Repository<Wallet>,
   ) {}
 
   async onModuleInit() {
@@ -38,9 +40,30 @@ export class SeedService implements OnModuleInit {
       this.logger.log('Starting database seed with test data...');
 
       // Create test wallet IDs
-      const wallet1Id = 'a1b2c3d4-e5f6-47a8-b9c0-d1e2f3a4b5c6';
-      const wallet2Id = 'b2c3d4e5-f6a7-48b9-c0d1-e2f3a4b5c6d7';
-      const wallet3Id = 'c3d4e5f6-a7b8-49c0-d1e2-f3a4b5c6d7e8';
+      const wallet1Id = uuidv4();
+      const wallet2Id = uuidv4();
+      const wallet3Id = uuidv4();
+
+      const wallet1 = this.walletRepository.create({
+        walletId: wallet1Id,
+        currency: 'USD',
+        status: WalletStatus.ACTIVE,
+        availableBalance: '750.0000',
+      });
+      const wallet2 = this.walletRepository.create({
+        walletId: wallet2Id,
+        currency: 'USD',
+        status: WalletStatus.ACTIVE,
+        availableBalance: '0.0000',
+      });
+      const wallet3 = this.walletRepository.create({
+        walletId: wallet3Id,
+        currency: 'USD',
+        status: WalletStatus.ACTIVE,
+        availableBalance: '2000.0000',
+      });
+
+      await this.walletRepository.save([wallet1, wallet2, wallet3]);
 
       // Transaction 1: Credit to wallet 1
       const transaction1Id = uuidv4();
@@ -48,7 +71,7 @@ export class SeedService implements OnModuleInit {
         id: transaction1Id,
         type: 'CREDIT',
         walletId: wallet1Id,
-        amount: 1000.0,
+        amount: '1000.0000',
         currency: 'USD',
         status: TransactionStatus.COMPLETED,
         metadata: JSON.stringify({ description: 'Initial credit' }),
@@ -62,7 +85,7 @@ export class SeedService implements OnModuleInit {
         id: transaction2Id,
         type: 'DEBIT',
         walletId: wallet1Id,
-        amount: 250.0,
+        amount: '250.0000',
         currency: 'USD',
         status: TransactionStatus.COMPLETED,
         metadata: JSON.stringify({ description: 'Purchase' }),
@@ -76,7 +99,7 @@ export class SeedService implements OnModuleInit {
         id: transaction3Id,
         type: 'CREDIT',
         walletId: wallet2Id,
-        amount: 500.0,
+        amount: '500.0000',
         currency: 'USD',
         status: TransactionStatus.COMPLETED,
         metadata: JSON.stringify({ description: 'Transfer received' }),
@@ -90,7 +113,7 @@ export class SeedService implements OnModuleInit {
         id: transaction4Id,
         type: 'DEBIT',
         walletId: wallet2Id,
-        amount: 500.0,
+        amount: '500.0000',
         currency: 'USD',
         status: TransactionStatus.COMPLETED,
         metadata: JSON.stringify({ description: 'Transfer to wallet 1' }),
@@ -104,7 +127,7 @@ export class SeedService implements OnModuleInit {
         id: transaction5Id,
         type: 'CREDIT',
         walletId: wallet3Id,
-        amount: 2000.0,
+        amount: '2000.0000',
         currency: 'USD',
         status: TransactionStatus.COMPLETED,
         metadata: JSON.stringify({ description: 'Initial credit' }),
@@ -129,12 +152,13 @@ export class SeedService implements OnModuleInit {
         id: uuidv4(),
         walletId: wallet1Id,
         type: 'CREDIT',
-        debitAmount: 0,
-        creditAmount: 1000.0,
-        balance: 1000.0,
+        debitAmount: '0.0000',
+        creditAmount: '1000.0000',
+        balance: '1000.0000',
         currency: 'USD',
         sourceTransactionId: transaction1Id,
         createdAt: new Date(),
+        status: 'COMPLETED',
       });
 
       // For wallet 1: after debit, balance = 750
@@ -142,12 +166,13 @@ export class SeedService implements OnModuleInit {
         id: uuidv4(),
         walletId: wallet1Id,
         type: 'DEBIT',
-        debitAmount: 250.0,
-        creditAmount: 0,
-        balance: 750.0,
+        debitAmount: '250.0000',
+        creditAmount: '0.0000',
+        balance: '750.0000',
         currency: 'USD',
         sourceTransactionId: transaction2Id,
         createdAt: new Date(),
+        status: 'COMPLETED',
       });
 
       // For wallet 2: after credit, balance = 500
@@ -155,12 +180,13 @@ export class SeedService implements OnModuleInit {
         id: uuidv4(),
         walletId: wallet2Id,
         type: 'CREDIT',
-        debitAmount: 0,
-        creditAmount: 500.0,
-        balance: 500.0,
+        debitAmount: '0.0000',
+        creditAmount: '500.0000',
+        balance: '500.0000',
         currency: 'USD',
         sourceTransactionId: transaction3Id,
         createdAt: new Date(),
+        status: 'COMPLETED',
       });
 
       // For wallet 2: after debit, balance = 0
@@ -168,12 +194,13 @@ export class SeedService implements OnModuleInit {
         id: uuidv4(),
         walletId: wallet2Id,
         type: 'DEBIT',
-        debitAmount: 500.0,
-        creditAmount: 0,
-        balance: 0,
+        debitAmount: '500.0000',
+        creditAmount: '0.0000',
+        balance: '0.0000',
         currency: 'USD',
         sourceTransactionId: transaction4Id,
         createdAt: new Date(),
+        status: 'COMPLETED',
       });
 
       // For wallet 3: after credit, balance = 2000
@@ -181,12 +208,13 @@ export class SeedService implements OnModuleInit {
         id: uuidv4(),
         walletId: wallet3Id,
         type: 'CREDIT',
-        debitAmount: 0,
-        creditAmount: 2000.0,
-        balance: 2000.0,
+        debitAmount: '0.0000',
+        creditAmount: '2000.0000',
+        balance: '2000.0000',
         currency: 'USD',
         sourceTransactionId: transaction5Id,
         createdAt: new Date(),
+        status: 'COMPLETED',
       });
 
       // Save ledger entries
@@ -198,9 +226,7 @@ export class SeedService implements OnModuleInit {
         ledgerEntry5,
       ]);
 
-      this.logger.log(
-        'Ledger entries inserted successfully. Seed completed successfully.',
-      );
+      this.logger.log('Ledger entries inserted successfully. Seed completed successfully.');
       this.logger.log(`Test data: Wallet 1 (${wallet1Id}) - Balance: $750.00`);
       this.logger.log(`Test data: Wallet 2 (${wallet2Id}) - Balance: $0.00`);
       this.logger.log(`Test data: Wallet 3 (${wallet3Id}) - Balance: $2000.00`);
