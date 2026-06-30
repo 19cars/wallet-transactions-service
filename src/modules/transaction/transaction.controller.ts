@@ -8,15 +8,26 @@ import {
   HttpStatus,
   Headers,
   Logger,
+  UseGuards,
 } from '@nestjs/common';
-import { ApiTags, ApiCreatedResponse, ApiConflictResponse, ApiHeader } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiCreatedResponse,
+  ApiConflictResponse,
+  ApiHeader,
+  ApiBearerAuth,
+} from '@nestjs/swagger';
 import { TransactionService } from './services/transaction.service';
 import { IdempotencyService } from './services/idempotency.service';
 import { CreateTransactionDto } from './dto/create-transaction.dto';
 import { CreateTransferDto } from './dto/create-transfer.dto';
+import { ReverseTransactionDto } from './dto/reverse-transaction.dto';
 import { Transaction } from './entities/transaction.entity';
+import { JwtAuthGuard } from '@modules/auth/jwt-auth.guard';
 
 @ApiTags('transactions')
+@ApiBearerAuth('bearer')
+@UseGuards(JwtAuthGuard)
 @Controller('transactions')
 export class TransactionController {
   private readonly logger = new Logger(TransactionController.name);
@@ -112,9 +123,10 @@ export class TransactionController {
   })
   async reversal(
     @Param('id') id: string,
+    @Body() dto: ReverseTransactionDto,
     @Headers('idempotency-key') idempotencyKey?: string,
   ): Promise<Transaction | { error: string } | Record<string, unknown>> {
-    const body = { transactionId: id };
+    const body = { transactionId: id, ...dto };
 
     if (idempotencyKey) {
       const cached = await this.idempotencyService.checkIdempotency(
@@ -127,7 +139,7 @@ export class TransactionController {
       }
     }
 
-    const reversal = await this.transactionService.reverseTransaction(id);
+    const reversal = await this.transactionService.reverseTransaction(id, dto);
 
     if (idempotencyKey) {
       await this.idempotencyService.storeIdempotency(

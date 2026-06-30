@@ -18,14 +18,20 @@ export class Transaction {
   @Column('uuid')
   walletId!: string;
 
-  @Column('numeric', { precision: 19, scale: 2 })
-  amount!: number;
+  @Column('decimal', { precision: 12, scale: 4, default: '0.0000' })
+  amount!: string;
 
   @Column('varchar', { length: 3 })
   currency!: string;
 
   @Column('varchar', { length: 20 })
   status!: TransactionStatus;
+
+  @Column('text', { nullable: true })
+  description?: string;
+
+  @Column('varchar', { length: 100, nullable: true })
+  externalReference?: string;
 
   @Column('text', { nullable: true })
   metadata?: string;
