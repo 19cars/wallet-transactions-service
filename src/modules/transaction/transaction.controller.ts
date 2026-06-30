@@ -10,13 +10,7 @@ import {
   Logger,
   UseGuards,
 } from '@nestjs/common';
-import {
-  ApiTags,
-  ApiCreatedResponse,
-  ApiConflictResponse,
-  ApiHeader,
-  ApiBearerAuth,
-} from '@nestjs/swagger';
+import { ApiTags, ApiCreatedResponse, ApiConflictResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { TransactionService } from './services/transaction.service';
 import { IdempotencyService } from './services/idempotency.service';
 import { CreateTransactionDto } from './dto/create-transaction.dto';
@@ -41,11 +35,6 @@ export class TransactionController {
   @HttpCode(HttpStatus.CREATED)
   @ApiCreatedResponse({ description: 'Transaction created successfully' })
   @ApiConflictResponse({ description: 'Idempotency conflict' })
-  @ApiHeader({
-    name: 'Idempotency-Key',
-    required: false,
-    description: 'Unique key for idempotent request',
-  })
   async create(
     @Body() dto: CreateTransactionDto,
     @Headers('idempotency-key') idempotencyKey?: string,
@@ -79,11 +68,6 @@ export class TransactionController {
   @Post('transfer')
   @HttpCode(HttpStatus.CREATED)
   @ApiCreatedResponse({ description: 'Transfer created successfully' })
-  @ApiHeader({
-    name: 'Idempotency-Key',
-    required: false,
-    description: 'Unique key for idempotent request',
-  })
   async transfer(
     @Body() dto: CreateTransferDto,
     @Headers('idempotency-key') idempotencyKey?: string,
@@ -116,11 +100,6 @@ export class TransactionController {
   @Post(':id/reversal')
   @HttpCode(HttpStatus.CREATED)
   @ApiCreatedResponse({ description: 'Transaction reversed successfully' })
-  @ApiHeader({
-    name: 'Idempotency-Key',
-    required: false,
-    description: 'Unique key for idempotent request',
-  })
   async reversal(
     @Param('id') id: string,
     @Body() dto: ReverseTransactionDto,
