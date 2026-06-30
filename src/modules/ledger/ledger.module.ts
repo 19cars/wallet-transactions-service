@@ -3,9 +3,10 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { LedgerEntry } from './entities/ledger-entry.entity';
 import { LedgerService } from './services/ledger.service';
 import { LedgerController } from './ledger.controller';
+import { WalletModule } from '@modules/wallet/wallet.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([LedgerEntry])],
+  imports: [TypeOrmModule.forFeature([LedgerEntry]), WalletModule],
   controllers: [LedgerController],
   providers: [LedgerService],
   exports: [LedgerService],

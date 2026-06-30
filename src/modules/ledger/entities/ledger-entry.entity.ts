@@ -1,10 +1,4 @@
-import {
-  Entity,
-  PrimaryColumn,
-  Column,
-  Index,
-  CreateDateColumn,
-} from 'typeorm';
+import { Entity, PrimaryColumn, Column, Index, CreateDateColumn } from 'typeorm';
 
 @Index('idx_wallet_created', ['walletId'])
 @Index('idx_wallet_transaction', ['sourceTransactionId'])
@@ -19,17 +13,20 @@ export class LedgerEntry {
   @Column('varchar', { length: 20 })
   type!: string;
 
-  @Column('numeric', { precision: 19, scale: 2 })
-  debitAmount!: number;
+  @Column('decimal', { precision: 12, scale: 4, default: '0.0000' })
+  debitAmount!: string;
 
-  @Column('numeric', { precision: 19, scale: 2 })
-  creditAmount!: number;
+  @Column('decimal', { precision: 12, scale: 4, default: '0.0000' })
+  creditAmount!: string;
 
-  @Column('numeric', { precision: 19, scale: 2 })
-  balance!: number;
+  @Column('decimal', { precision: 12, scale: 4, default: '0.0000' })
+  balance!: string;
 
   @Column('varchar', { length: 3 })
   currency!: string;
+
+  @Column('varchar', { length: 20 })
+  status!: string;
 
   @Column('uuid')
   sourceTransactionId!: string;
