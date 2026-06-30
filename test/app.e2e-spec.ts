@@ -5,6 +5,8 @@ import { AppModule } from '../src/app.module';
 
 describe('Transactions E2E', () => {
   let app: INestApplication;
+  let authToken: string;
+  let walletId: string;
 
   beforeAll(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -21,6 +23,21 @@ describe('Transactions E2E', () => {
       }),
     );
     await app.init();
+
+    const loginResponse = await request(app.getHttpServer())
+      .post('/api/v1/auth/login')
+      .send({ username: 'senior.backend', password: 'Password123' })
+      .expect(201);
+
+    authToken = loginResponse.body.token;
+
+    const createWalletResponse = await request(app.getHttpServer())
+      .post('/api/v1/wallets')
+      .set('Authorization', `Bearer ${authToken}`)
+      .send({ currency: 'USD', status: 'Active', availableBalance: '500.0000' })
+      .expect(201);
+
+    walletId = createWalletResponse.body.walletId;
   });
 
   afterAll(async () => {
@@ -42,13 +59,14 @@ describe('Transactions E2E', () => {
     it('should create a transaction', () => {
       const createTransactionDto = {
         type: 'DEBIT',
-        walletId: '123e4567-e89b-12d3-a456-426614174000',
-        amount: 100,
+        walletId,
+        amount: '100.0000',
         currency: 'USD',
       };
 
       return request(app.getHttpServer())
         .post('/api/v1/transactions')
+        .set('Authorization', `Bearer ${authToken}`)
         .send(createTransactionDto)
         .expect(201)
         .expect((res) => {
@@ -62,20 +80,23 @@ describe('Transactions E2E', () => {
         type: 'INVALID',
       };
 
-      return request(app.getHttpServer()).post('/api/v1/transactions').send(invalidDto).expect(400);
+      return request(app.getHttpServer())
+        .post('/api/v1/transactions')
+        .set('Authorization', `Bearer ${authToken}`)
+        .send(invalidDto)
+        .expect(400);
     });
   });
 
   describe('GET /wallets/:walletId/balance', () => {
     it('should retrieve wallet balance', () => {
-      const walletId = '123e4567-e89b-12d3-a456-426614174000';
-
       return request(app.getHttpServer())
         .get(`/api/v1/wallets/${walletId}/balance`)
+        .set('Authorization', `Bearer ${authToken}`)
         .expect(200)
         .expect((res) => {
           expect(res.body).toHaveProperty('walletId');
-          expect(res.body).toHaveProperty('balance');
+          expect(res.body).toHaveProperty('availableBalance');
           expect(res.body).toHaveProperty('currency');
         });
     });
